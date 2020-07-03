@@ -6,7 +6,6 @@ import shutil
 import time
 from pathlib import Path
 from threading import Thread
-import retinex
 import cv2
 import numpy as np
 import torch
@@ -19,15 +18,7 @@ from utils.utils import xyxy2xywh, xywh2xyxy
 help_url = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
 img_formats = ['.bmp', '.jpg', '.jpeg', '.png', '.tif', '.dng']
 vid_formats = ['.mov', '.avi', '.mp4', '.mpg', '.mpeg', '.m4v', '.wmv', '.mkv']
-config = {
-    "sigma_list": [15, 80, 250],
-    "G"         : 5.0,
-    "b"         : 25.0,
-    "alpha"     : 125.0,
-    "beta"      : 46.0,
-    "low_clip"  : 0.01,
-    "high_clip" : 0.99
-}
+
 
 # Get orientation exif tag
 for orientation in ExifTags.TAGS.keys():
