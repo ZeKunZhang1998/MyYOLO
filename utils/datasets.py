@@ -467,11 +467,11 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             # Load mosaic
             img, labels = load_mosaic(self, index)
             shapes = None
-            gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.float32)
+            #gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.float32)
 
-            r,c = gray_img.shape[:2]
-            dark_prop = 0
-            dark_prop = np.sum(gray_img<60)/(r*c)
+            #r,c = gray_img.shape[:2]
+            #dark_prop = 0
+            #dark_prop = np.sum(gray_img<60)/(r*c)
                 
             if dark_prop>0.75:
                 img = np.uint8(np.clip(((80.0/np.mean(gray_img))* img), 0, 255))
