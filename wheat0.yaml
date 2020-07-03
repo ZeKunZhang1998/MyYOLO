@@ -8,8 +8,8 @@
 
 
 # train and val datasets (image directory or *.txt file with image paths)
-train: /content/drive/My Drive/yolov5/convertor/fold0/images/train2017/
-val: /content/drive/My Drive/yolov5/convertor/fold0/images/val2017/
+train:./convertor/fold0/images/train2017/
+val: ./convertor/fold0/images/train2017/
 
 # number of classes
 nc: 1
