@@ -6,19 +6,28 @@ import shutil
 import time
 from pathlib import Path
 from threading import Thread
-
+import retinex
 import cv2
 import numpy as np
 import torch
 from PIL import Image, ExifTags
 from torch.utils.data import Dataset
 from tqdm import tqdm
-
+import matplotlib.pyplot as plt
 from utils.utils import xyxy2xywh, xywh2xyxy
 
 help_url = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
 img_formats = ['.bmp', '.jpg', '.jpeg', '.png', '.tif', '.dng']
 vid_formats = ['.mov', '.avi', '.mp4', '.mpg', '.mpeg', '.m4v', '.wmv', '.mkv']
+config = {
+    "sigma_list": [15, 80, 250],
+    "G"         : 5.0,
+    "b"         : 25.0,
+    "alpha"     : 125.0,
+    "beta"      : 46.0,
+    "low_clip"  : 0.01,
+    "high_clip" : 0.99
+}
 
 # Get orientation exif tag
 for orientation in ExifTags.TAGS.keys():
@@ -489,6 +498,24 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 labels[:, 4] = ratio[1] * h * (x[:, 2] + x[:, 4] / 2) + pad[1]
 
         if self.augment:
+            choice3 = random.randint(0,1)
+            if choice3 == 0:
+                su = 0
+                for box in labels:
+                    if (box[3]-box[1])*(box[4]-box[2]) <20000 and (box[3]-box[1])*(box[4]-box[2]) > 1000 and random.random()<0.5:
+                        #print('***')
+                        #print(box)
+                        x1 = int(box[1]+(box[3]-box[1])*0.25)
+                        x2 = int(box[3]-(box[3]-box[1])*0.25)
+                        y1 = int(box[2]+(box[4]-box[2])*0.25)
+                        y2 = int(box[4]-(box[4]-box[2])*0.25)
+                
+                #print(x1,x2,y1,y2)
+                #print('*******')
+                #print(x1,type(x1))
+                        img[y1:y2,x1:x2] = 0
+                #plt.imshow(img)
+                #plt.show()
             # Augment imagespace
             if not self.mosaic:
                 img, labels = random_affine(img, labels,
@@ -551,7 +578,12 @@ def load_image(self, index):
     img = self.imgs[index]
     if img is None:  # not cached
         path = self.img_files[index]
-        img = cv2.imread(path)  # BGR
+        img = cv2.imread(path)
+
+        
+        
+        
+        # BGR
         assert img is not None, 'Image Not Found ' + path
         h0, w0 = img.shape[:2]  # orig hw
         r = self.img_size / max(h0, w0)  # resize image to img_size
@@ -647,21 +679,7 @@ def replicate(img, labels):
     # Replicate labels
     h, w = img.shape[:2]
     boxes = labels[:, 1:].astype(int)
-    if choice3 == 0:
-        su = 0
-        for box in boxes:
-            if (box[2]-box[0])*(box[3]-box[1]) <20000 and (box[2]-box[0])*(box[3]-box[1]) > 1000 and random.random()<0.5:
-                    #print('***')
-                    #print(box)
-                x1 = int(box[0]+(box[2]-box[0])*0.25)
-                x2 = int(box[2]-(box[2]-box[0])*0.25)
-                y1 = int(box[1]+(box[3]-box[1])*0.25)
-                y2 = int(box[3]-(box[3]-box[1])*0.25)
-                    
-                    #print(x1,x2,y1,y2)
-                    #print('*******')
-                    #print(x1,type(x1))
-                img[y1:y2,x1:x2] = 0
+
     x1, y1, x2, y2 = boxes.T
     s = ((x2 - x1) + (y2 - y1)) / 2  # side length (pixels)
     for i in s.argsort()[:round(s.size * 0.5)]:  # smallest indices
