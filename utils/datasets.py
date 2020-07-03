@@ -467,6 +467,14 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             # Load mosaic
             img, labels = load_mosaic(self, index)
             shapes = None
+            gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.float32)
+
+            r,c = gray_img.shape[:2]
+            dark_prop = 0
+            dark_prop = np.sum(gray_img<60)/(r*c)
+                
+            if dark_prop>0.75:
+                img = np.uint8(np.clip(((80.0/np.mean(gray_img))* img), 0, 255))
 
         else:
             # Load image
@@ -476,6 +484,14 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
             img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment)
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
+            gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.float32)
+            
+            r,c = gray_img.shape[:2]
+            dark_prop = 0
+            dark_prop = np.sum(gray_img<60)/(r*c)
+            
+            if dark_prop>0.75:
+                img = np.uint8(np.clip(((80.0/np.mean(gray_img))* img), 0, 255))
 
             # Load labels
             labels = []
@@ -571,7 +587,6 @@ def load_image(self, index):
         path = self.img_files[index]
         img = cv2.imread(path)
 
-        
         
         
         # BGR
