@@ -578,7 +578,14 @@ def load_image(self, index):
         path = self.img_files[index]
         img = cv2.imread(path)
 
+        #gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.float32)
         
+        #r,c = gray_img.shape[:2]
+        #dark_prop = 0
+        #pix_sum = r*c
+        #dark_prop = np.sum(gray_img<60)/(r*c)
+        #if dark_prop>0.75:
+        #    img = np.uint8(np.clip(((80.0/np.mean(gray_img))* img), 0, 255))
         
         # BGR
         assert img is not None, 'Image Not Found ' + path
