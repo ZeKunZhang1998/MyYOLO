@@ -493,7 +493,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             if choice3 == 0:
                 su = 0
                 for box in labels:
-                    if (box[3]-box[1])*(box[4]-box[2]) <20000 and (box[3]-box[1])*(box[4]-box[2]) > 1000 and random.random()<0.6:
+                    if  (box[3]-box[1])*(box[4]-box[2]) > 5000 and random.random()<0.6:
                         #print('***')
                         #print(box)
                         x1 = int(box[1]+(box[3]-box[1])*0.25)
