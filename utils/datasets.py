@@ -463,6 +463,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             index = self.indices[index]
 
         hyp = self.hyp
+        self.mosaic = 0
         if self.mosaic:
             # Load mosaic
             img, labels = load_mosaic(self, index)
@@ -487,7 +488,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             # Load labels
 
             labels = []
-            x = self.labels[index] + self.labels[index1]
+            x = torch.cat([self.labels[index] ,self.labels[index1]],0)
             if x.size > 0:
                 # Normalized xywh to pixel xyxy format
                 labels = x.copy()
@@ -650,7 +651,8 @@ def load_mosaic(self, index):
         img4[y1a:y2a, x1a:x2a] = img[y1b:y2b, x1b:x2b]  # img4[ymin:ymax, xmin:xmax]
         padw = x1a - x1b
         padh = y1a - y1b
-
+  
+        
         # Labels
         x = self.labels[index]
         labels = x.copy()
@@ -669,6 +671,7 @@ def load_mosaic(self, index):
 
         # Replicate
         # img4, labels4 = replicate(img4, labels4)
+
 
     # Augment
     # img4 = img4[s // 2: int(s * 1.5), s // 2:int(s * 1.5)]  # center crop (WARNING, requires box pruning)
