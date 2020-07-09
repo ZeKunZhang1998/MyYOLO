@@ -488,7 +488,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             # Load labels
 
             labels = []
-            x = torch.cat([self.labels[index] ,self.labels[index1]],0)
+            x = np.concatenate([self.labels[index] ,self.labels[index1]], 0)
             if x.size > 0:
                 # Normalized xywh to pixel xyxy format
                 labels = x.copy()
