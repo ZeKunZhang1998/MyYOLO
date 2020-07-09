@@ -498,6 +498,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 labels[:, 4] = ratio[1] * h * (x[:, 2] + x[:, 4] / 2) + pad[1]
                 labels[:, 0] = 0.5
             img = (img+img1)/2
+            img.astype(np.float32)
         
         if self.augment:
             choice3 = random.randint(0,1)
