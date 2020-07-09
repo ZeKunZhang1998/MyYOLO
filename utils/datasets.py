@@ -477,16 +477,17 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         else:
             # Load image
             img, (h0, w0), (h, w) = load_image(self, index)
-
             # Letterbox
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
             img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment)
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
 
-
+            index1 = random.randint(0,len(self.img_files))
+            img1, (_,_), (_,_) = load_image(self, index1)
             # Load labels
+
             labels = []
-            x = self.labels[index]
+            x = self.labels[index] + self.labels[index1]
             if x.size > 0:
                 # Normalized xywh to pixel xyxy format
                 labels = x.copy()
@@ -494,7 +495,9 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 labels[:, 2] = ratio[1] * h * (x[:, 2] - x[:, 4] / 2) + pad[1]  # pad height
                 labels[:, 3] = ratio[0] * w * (x[:, 1] + x[:, 3] / 2) + pad[0]
                 labels[:, 4] = ratio[1] * h * (x[:, 2] + x[:, 4] / 2) + pad[1]
-
+                labels[:, 0] = 0.5
+            img = (img+img1)/2
+        
         if self.augment:
             choice3 = random.randint(0,1)
             if choice3 == 0:
