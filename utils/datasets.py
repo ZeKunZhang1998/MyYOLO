@@ -6,19 +6,19 @@ import shutil
 import time
 from pathlib import Path
 from threading import Thread
+
 import cv2
 import numpy as np
 import torch
 from PIL import Image, ExifTags
 from torch.utils.data import Dataset
 from tqdm import tqdm
-import matplotlib.pyplot as plt
+
 from utils.utils import xyxy2xywh, xywh2xyxy
 
 help_url = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
 img_formats = ['.bmp', '.jpg', '.jpeg', '.png', '.tif', '.dng']
 vid_formats = ['.mov', '.avi', '.mp4', '.mpg', '.mpeg', '.m4v', '.wmv', '.mkv']
-
 
 # Get orientation exif tag
 for orientation in ExifTags.TAGS.keys():
@@ -463,32 +463,23 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             index = self.indices[index]
 
         hyp = self.hyp
-        self.mosaic = 0
         if self.mosaic:
             # Load mosaic
             img, labels = load_mosaic(self, index)
             shapes = None
-            #gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.float32)
 
-            #r,c = gray_img.shape[:2]
-            #dark_prop = 0
-            #dark_prop = np.sum(gray_img<60)/(r*c)
-                
-            
         else:
             # Load image
             img, (h0, w0), (h, w) = load_image(self, index)
+
             # Letterbox
             shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
             img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment)
             shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
 
-            index1 = random.randint(0,len(self.img_files))
-            img1, (_,_), (_,_) = load_image(self, index1)
             # Load labels
-
             labels = []
-            x = np.concatenate([self.labels[index] ,self.labels[index1]], 0)
+            x = self.labels[index]
             if x.size > 0:
                 # Normalized xywh to pixel xyxy format
                 labels = x.copy()
@@ -496,29 +487,25 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                 labels[:, 2] = ratio[1] * h * (x[:, 2] - x[:, 4] / 2) + pad[1]  # pad height
                 labels[:, 3] = ratio[0] * w * (x[:, 1] + x[:, 3] / 2) + pad[0]
                 labels[:, 4] = ratio[1] * h * (x[:, 2] + x[:, 4] / 2) + pad[1]
-                labels[:, 0] = 0.5
-            img = (img+img1)/2
-            img = img.astype(np.uint8)
-            #print(img)
+
         if self.augment:
             choice3 = random.randint(0,1)
             if choice3 == 0:
                 su = 0
                 for box in labels:
-                    if (box[3]-box[1])*(box[4]-box[2]) <20000 and (box[3]-box[1])*(box[4]-box[2]) > 1000 and random.random()<0.5:
+                    if  (box[3]-box[1])*(box[4]-box[2]) > 5000 and random.random()<0.6:
                         #print('***')
                         #print(box)
                         x1 = int(box[1]+(box[3]-box[1])*0.25)
                         x2 = int(box[3]-(box[3]-box[1])*0.25)
                         y1 = int(box[2]+(box[4]-box[2])*0.25)
                         y2 = int(box[4]-(box[4]-box[2])*0.25)
-                
-                #print(x1,x2,y1,y2)
-                #print('*******')
-                #print(x1,type(x1))
+                        
+                        #print(x1,x2,y1,y2)
+                        #print('*******')
+                        #print(x1,type(x1))
                         img[y1:y2,x1:x2] = 0
-                #plt.imshow(img)
-                #plt.show()
+            #plt.imshow(img)
             # Augment imagespace
             if not self.mosaic:
                 img, labels = random_affine(img, labels,
@@ -528,8 +515,6 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
                                             shear=hyp['shear'])
 
             # Augment colorspace
-            #img = np.float32(img)
-
             augment_hsv(img, hgain=hyp['hsv_h'], sgain=hyp['hsv_s'], vgain=hyp['hsv_v'])
 
             # Apply cutouts
@@ -583,18 +568,7 @@ def load_image(self, index):
     img = self.imgs[index]
     if img is None:  # not cached
         path = self.img_files[index]
-        img = cv2.imread(path)
-
-        #gray_img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY).astype(np.float32)
-        
-        #r,c = gray_img.shape[:2]
-        #dark_prop = 0
-        #pix_sum = r*c
-        #dark_prop = np.sum(gray_img<60)/(r*c)
-        #if dark_prop>0.75:
-        #    img = np.uint8(np.clip(((80.0/np.mean(gray_img))* img), 0, 255))
-        
-        # BGR
+        img = cv2.imread(path)  # BGR
         assert img is not None, 'Image Not Found ' + path
         h0, w0 = img.shape[:2]  # orig hw
         r = self.img_size / max(h0, w0)  # resize image to img_size
@@ -607,8 +581,6 @@ def load_image(self, index):
 
 
 def augment_hsv(img, hgain=0.5, sgain=0.5, vgain=0.5):
-    #print('--------')
-    #print(img)
     r = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain] + 1  # random gains
     hue, sat, val = cv2.split(cv2.cvtColor(img, cv2.COLOR_BGR2HSV))
     dtype = img.dtype  # uint8
@@ -656,8 +628,7 @@ def load_mosaic(self, index):
         img4[y1a:y2a, x1a:x2a] = img[y1b:y2b, x1b:x2b]  # img4[ymin:ymax, xmin:xmax]
         padw = x1a - x1b
         padh = y1a - y1b
-  
-        
+
         # Labels
         x = self.labels[index]
         labels = x.copy()
@@ -677,7 +648,6 @@ def load_mosaic(self, index):
         # Replicate
         # img4, labels4 = replicate(img4, labels4)
 
-
     # Augment
     # img4 = img4[s // 2: int(s * 1.5), s // 2:int(s * 1.5)]  # center crop (WARNING, requires box pruning)
     img4, labels4 = random_affine(img4, labels4,
@@ -694,7 +664,6 @@ def replicate(img, labels):
     # Replicate labels
     h, w = img.shape[:2]
     boxes = labels[:, 1:].astype(int)
-
     x1, y1, x2, y2 = boxes.T
     s = ((x2 - x1) + (y2 - y1)) / 2  # side length (pixels)
     for i in s.argsort()[:round(s.size * 0.5)]:  # smallest indices
